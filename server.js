@@ -44,23 +44,25 @@ app.get('/criar-pix', async (req, res) => {
 });
 
 // 🔹 WEBHOOK
+let pagamentosProcessados = new Set();
+
 app.post('/webhook', async (req, res) => {
   try {
-    console.log("🔔 Webhook recebido:", req.body);
-
     let paymentId = null;
 
-    // Novo formato
     if (req.body.type === "payment") {
       paymentId = req.body.data.id;
     }
 
-    // Compatibilidade
     if (req.body.topic === "payment") {
       paymentId = req.body.resource;
     }
 
-    if (!paymentId) {
+    if (!paymentId) return res.sendStatus(200);
+
+    // 🔥 EVITA REPETIÇÃO
+    if (pagamentosProcessados.has(paymentId)) {
+      console.log("⚠️ Pagamento já processado:", paymentId);
       return res.sendStatus(200);
     }
 
@@ -73,25 +75,18 @@ app.post('/webhook', async (req, res) => {
       }
     );
 
-    const status = response.data.status;
+    if (response.data.status === "approved") {
+      pagamentosProcessados.add(paymentId);
 
-    console.log("💰 Status:", status);
+      console.log("💰 APROVADO → LIBERANDO");
 
-    if (status === "approved") {
-      console.log("🚀 LIBERANDO MÁQUINA");
-
-      try {
-        await axios.get("https://flimsily-unfaulty-pandora.ngrok-free.dev/liberar");
-        console.log("✅ LIBERADO");
-      } catch (err) {
-        console.log("❌ ERRO ESP32:", err.message);
-      }
+      await axios.get("https://flimsily-unfaulty-pandora.ngrok-free.dev/liberar");
     }
 
     res.sendStatus(200);
 
   } catch (err) {
-    console.log("❌ ERRO WEBHOOK:", err.message);
+    console.log("Erro:", err.message);
     res.sendStatus(500);
   }
 });
