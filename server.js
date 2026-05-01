@@ -47,13 +47,35 @@ app.get('/criar-pix', async (req, res) => {
 app.post('/webhook', async (req, res) => {
   try {
     console.log("Webhook:", req.body);
+
+    if (req.body.type === "payment") {
+      const paymentId = req.body.data.id;
+
+      const response = await axios.get(
+        `https://api.mercadopago.com/v1/payments/${paymentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${ACCESS_TOKEN}`
+          }
+        }
+      );
+
+      if (response.data.status === "approved") {
+        console.log("💰 PAGAMENTO APROVADO");
+
+        await axios.get("http://192.168.15.43/liberar");
+
+        console.log("🚀 MÁQUINA LIBERADA");
+      }
+    }
+
     res.sendStatus(200);
+
   } catch (err) {
-    console.log(err);
+    console.log("ERRO WEBHOOK:", err.message);
     res.sendStatus(500);
   }
 });
-
 // 🔹 SERVIDOR
 const PORT = process.env.PORT || 8080;
 
