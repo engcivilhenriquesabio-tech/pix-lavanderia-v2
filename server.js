@@ -6,7 +6,7 @@ app.use(express.json());
 
 // 🔐 CONFIG
 const ACCESS_TOKEN = 'APP_USR-676309850173258-042921-a6849f3e25ccce1aeef9eac881edcb11-349504211';
-const BASE_URL = 'https://pix-lavanderia-v2.up.railway.app';
+const BASE_URL = 'https://pix-lavanderia-v2-production.up.railway.app';
 
 // 🔹 ROTA TESTE
 app.get('/', (req, res) => {
