@@ -46,33 +46,52 @@ app.get('/criar-pix', async (req, res) => {
 // 🔹 WEBHOOK
 app.post('/webhook', async (req, res) => {
   try {
-    console.log("Webhook:", req.body);
+    console.log("🔔 Webhook recebido:", req.body);
 
+    let paymentId = null;
+
+    // Novo formato
     if (req.body.type === "payment") {
-      const paymentId = req.body.data.id;
+      paymentId = req.body.data.id;
+    }
 
-      const response = await axios.get(
-        `https://api.mercadopago.com/v1/payments/${paymentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${ACCESS_TOKEN}`
-          }
+    // Compatibilidade
+    if (req.body.topic === "payment") {
+      paymentId = req.body.resource;
+    }
+
+    if (!paymentId) {
+      return res.sendStatus(200);
+    }
+
+    const response = await axios.get(
+      `https://api.mercadopago.com/v1/payments/${paymentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`
         }
-      );
+      }
+    );
 
-      if (response.data.status === "approved") {
-        console.log("💰 PAGAMENTO APROVADO");
+    const status = response.data.status;
 
+    console.log("💰 Status:", status);
+
+    if (status === "approved") {
+      console.log("🚀 LIBERANDO MÁQUINA");
+
+      try {
         await axios.get("http://192.168.15.43/liberar");
-
-        console.log("🚀 MÁQUINA LIBERADA");
+        console.log("✅ LIBERADO");
+      } catch (err) {
+        console.log("❌ ERRO ESP32:", err.message);
       }
     }
 
     res.sendStatus(200);
 
   } catch (err) {
-    console.log("ERRO WEBHOOK:", err.message);
+    console.log("❌ ERRO WEBHOOK:", err.message);
     res.sendStatus(500);
   }
 });
