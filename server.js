@@ -81,7 +81,7 @@ app.post('/webhook', async (req, res) => {
       console.log("🚀 LIBERANDO MÁQUINA");
 
       try {
-        await axios.get("http://192.168.15.43/liberar");
+        await axios.get("https://flimsily-unfaulty-pandora.ngrok-free.dev/liberar");
         console.log("✅ LIBERADO");
       } catch (err) {
         console.log("❌ ERRO ESP32:", err.message);
